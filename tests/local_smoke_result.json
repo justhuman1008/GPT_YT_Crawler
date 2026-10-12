@@ -1,0 +1,23 @@
+{
+  "execution_platform": "Windows",
+  "mode": "sample_15_seconds",
+  "started_at": "2026-10-12T11:37:06.612395+00:00",
+  "local_metadata_pass": true,
+  "download_pass": true,
+  "video_audio_decode_pass": true,
+  "onedrive_upload_pass": true,
+  "onedrive_size_pass": true,
+  "onedrive_download_sha256_pass": true,
+  "onedrive_folder_access_pass": true,
+  "video_id": "UOwDYIBeq9E",
+  "title": "바다생물이 수만 km를 떠돌아도 길을 잃지 않는 이유 | 과학을 보다 EP.244",
+  "availability": "subscriber_only",
+  "source_duration_seconds": 2316,
+  "height": 1080,
+  "yt_dlp_version": "2026.08.19",
+  "remote_file": "onedrive2:바로 가기/유튜브 멤버쉽 영상/test-UOwDYIBeq9E-15s-af97f84cb69d.mkv",
+  "file_size_bytes": 3419785,
+  "sha256": "d18708cc1d304b66a81bf196e3077e124058e1eeb176a0c0a07269b2d99db6e1",
+  "warnings": [],
+  "finished_at": "2026-10-12T11:37:51.320199+00:00"
+}
