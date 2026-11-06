@@ -1,0 +1,11 @@
+[Unit]
+Description=Check YouTube archive queue every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00
+RandomizedDelaySec=60
+Persistent=true
+Unit=yt-archive.service
+
+[Install]
+WantedBy=timers.target

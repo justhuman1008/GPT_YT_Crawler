@@ -1,0 +1,57 @@
+# 모든 상대 경로는 이 설정 파일이 있는 폴더를 기준으로 합니다.
+# 멤버십 게시물 등에만 있는 영상은 URL로 보완할 수 있습니다.
+extra_urls = []
+
+[storage]
+state_dir = "data"
+min_free_gib = 5
+
+[download]
+cookies_file = "secrets/youtube-cookies.txt"
+# 실행 전 관리용 파일/youtube-cookies.txt의 변경 여부를 확인하고 새 파일만 적용합니다.
+cookies_from_drive = true
+ffmpeg = "ffmpeg"
+ffprobe = "ffprobe"
+js_runtime = "deno"
+# 0: 제공되는 최고 해상도. 예: 1080
+max_height = 0
+sleep_seconds = 10
+
+[drive]
+remote = "gdrive:유튜브 동영상"
+rclone = "rclone"
+config_file = "secrets/rclone.conf"
+# readback: 원격 전체 파일을 스트리밍해 SHA-256 검증 (추가 디스크 불필요)
+verification = "readback"
+
+[youtube]
+# 기본값 꺼짐. 켜면 Drive 검증 → YouTube 일부 공개 처리 완료 → 로컬 삭제
+enabled = false
+# 기존에 Drive 저장 후 삭제한 영상까지 YouTube에 올릴지 여부
+upload_existing = false
+client_secrets_file = "secrets/youtube-client.json"
+token_file = "secrets/youtube-token.json"
+# OAuth 승인 시 선택한 채널 ID와 반드시 일치해야 합니다.
+channel_id = ""
+category_id = "22"
+chunk_mib = 8
+max_uploads_per_run = 10
+
+[schedule]
+recent_limit = 100
+full_rescan_hours = 168
+max_jobs_per_run = 20
+retry_minutes = 30
+
+[reports]
+# 각 수집 실행 후 어제·오늘 보고서 갱신. 채팅 전송·예약은 별도 설정합니다.
+enabled = true
+upload_to_drive = true
+
+# 채널을 필요한 만큼 추가합니다. 채널별 youtube = false로 업로드를 제외할 수 있습니다.
+# [[channels]]
+# name = "채널 이름"
+# url = "https://www.youtube.com/@CHANNEL_HANDLE"
+# tabs = ["membership", "videos", "streams"]
+# members_only = false
+# youtube = true

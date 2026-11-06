@@ -1,0 +1,21 @@
+[Unit]
+Description=Daily YouTube archive verification report
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ytarchive
+Group=ytarchive
+WorkingDirectory=/opt/yt-archive
+ExecStart=/opt/yt-archive/.venv/bin/python -m yt_archive --config /opt/yt-archive/config.toml report
+UMask=0077
+Environment=PYTHONUTF8=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+TimeoutStartSec=1h
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/yt-archive/data /opt/yt-archive/secrets

@@ -1,0 +1,26 @@
+[Unit]
+Description=YouTube Google Drive archiver
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ytarchive
+Group=ytarchive
+WorkingDirectory=/opt/yt-archive
+ExecStart=/opt/yt-archive/.venv/bin/python -m yt_archive --config /opt/yt-archive/config.toml run
+UMask=0077
+Environment=PYTHONUTF8=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=DENO_DIR=/opt/yt-archive/data/deno-cache
+Environment=XDG_CACHE_HOME=/opt/yt-archive/data/cache
+TimeoutStartSec=infinity
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/yt-archive/data /opt/yt-archive/secrets
+
+[Install]
+WantedBy=multi-user.target

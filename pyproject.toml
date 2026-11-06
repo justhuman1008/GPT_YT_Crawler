@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gpt-yt-crawler"
+version = "0.1.0"
+description = "Archive authorized YouTube videos to Google Drive, optionally to an unlisted YouTube channel."
+requires-python = ">=3.11"
+dependencies = ["yt-dlp[default]>=2026.3.17", "google-auth-oauthlib>=1.2.2", "requests>=2.32.4"]
+
+[project.scripts]
+yt-archive = "yt_archive.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["yt_archive*"]

@@ -1,0 +1,10 @@
+[Unit]
+Description=Publish previous-day archive report at 00:10 Korea time
+
+[Timer]
+OnCalendar=*-*-* 00:10:00 Asia/Seoul
+Persistent=true
+Unit=yt-archive-report.service
+
+[Install]
+WantedBy=timers.target
