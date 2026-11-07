@@ -205,9 +205,12 @@ def build_report(database, config, day="yesterday", *, now=None):
         details = json.loads(item["summary"]) if known else {}
         cookies = details.get("cookies", {})
         cookies_status = cookies.get("status") if isinstance(cookies, dict) else None
+        youtube_token = details.get("youtube_token", {})
+        token_status = youtube_token.get("status") if isinstance(youtube_token, dict) else None
         run_details.append({"started_at": iso(item["started_at"]), "finished_at": iso(finished) if known else None,
                             "status": item["status"] if known else "unfinished_at_cutoff",
                             "cookies_status": cookies_status if cookies_status in {"updated", "unchanged", "disabled", "failed"} else None,
+                            "youtube_token_status": token_status if token_status in {"updated", "unchanged", "disabled", "failed"} else None,
                             "scan_failures": len(details.get("scan_failures", [])), "error": clean_error(details.get("error"))})
     warnings = []
     if not runs:
@@ -304,6 +307,9 @@ def render_markdown(report):
         cookie_label = {"updated": "교체 완료", "unchanged": "변경 없음", "disabled": "자동 교체 꺼짐", "failed": "실패"}.get(item.get("cookies_status"))
         if cookie_label:
             lines.append(f"  - 쿠키 파일: {cookie_label}")
+        token_label = {"updated": "수신·확인 완료", "unchanged": "변경 없음", "disabled": "자동 수신 꺼짐", "failed": "실패"}.get(item.get("youtube_token_status"))
+        if token_label:
+            lines.append(f"  - YouTube 업로드 토큰: {token_label}")
         if item["error"]:
             lines.append(f"  - 오류: {md(item['error'])}")
     lines += ["", "## 영상별 처리 내역", "", "업로드 시각은 원본 게시 시각, 다운로드 시각은 최초 완료 시각입니다.", ""]

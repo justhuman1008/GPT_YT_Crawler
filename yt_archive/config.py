@@ -17,6 +17,7 @@ class Channel:
     tabs: tuple[str, ...]
     members_only: bool = False
     youtube: bool = True
+    download: bool = True
 
 
 @dataclass(frozen=True)
@@ -50,12 +51,29 @@ class Config:
     reports_enabled: bool = True
     reports_drive: bool = True
     cookies_from_drive: bool = False
+    youtube_token_from_drive: bool = False
+    control_sheet_id: str = ""
+
+    def job_enabled(self, job: dict) -> bool:
+        if not self.control_sheet_id or job["source"] == "manual":
+            return True
+        return any(channel.url == job["source"] and channel.download for channel in self.channels)
 
     def wants_youtube(self, job: dict) -> bool:
         allowed = next((channel.youtube for channel in self.channels if channel.url == job["source"]),
                        bool(job["youtube_allowed"]))
-        return self.youtube_enabled and allowed and (
+        return self.youtube_enabled and self.job_enabled(job) and allowed and (
             not job["completed_at"] or self.youtube_existing or bool(job["youtube_session"]) or bool(job["youtube_id"]))
+
+
+def channel_url(value: str) -> str:
+    parts = urlsplit(value)
+    if parts.scheme != "https" or parts.hostname not in {"www.youtube.com", "youtube.com"}:
+        raise ValueError("channel URL")
+    path = parts.path.rstrip("/")
+    if not re.fullmatch(r"/(?:@[^/?#]+|channel/UC[A-Za-z0-9_-]{22}|c/[^/?#]+|user/[^/?#]+)", path):
+        raise ValueError("channel URL must be a channel root")
+    return "https://www.youtube.com" + path
 
 
 def load_config(path: str | Path) -> Config:
@@ -78,18 +96,13 @@ def load_config(path: str | Path) -> Config:
 
         channels = []
         for item in data.get("channels", []):
-            parts = urlsplit(item["url"])
-            if parts.scheme != "https" or parts.hostname not in {"www.youtube.com", "youtube.com"}:
-                raise ValueError("channel URL")
-            channel_path = parts.path.rstrip("/")
-            if not re.fullmatch(r"/(?:@[^/?#]+|channel/UC[A-Za-z0-9_-]{22}|c/[^/?#]+|user/[^/?#]+)", channel_path):
-                raise ValueError("channel URL must be a channel root")
+            url = channel_url(item["url"])
             tabs = tuple(item.get("tabs", ["membership", "videos", "streams"]))
             if not tabs or set(tabs) - {"membership", "videos", "streams", "shorts"}:
                 raise ValueError("tabs")
-            channels.append(Channel(str(item.get("name", channel_path)),
-                                    "https://www.youtube.com" + channel_path, tabs,
-                                    flag(item, "members_only", False), flag(item, "youtube", True)))
+            channels.append(Channel(str(item.get("name", urlsplit(url).path)), url, tabs,
+                                    flag(item, "members_only", False), flag(item, "youtube", True),
+                                    flag(item, "download", True)))
         remote = drive.get("remote", "gdrive:" + ARCHIVE_DIRECTORY).rstrip("/")
         if not re.fullmatch(r"[A-Za-z0-9_-]+:[^\r\n]*", remote) or ".." in remote.split("/"):
             raise ValueError("drive.remote")
@@ -118,12 +131,16 @@ def load_config(path: str | Path) -> Config:
             max_youtube_uploads=int(youtube.get("max_uploads_per_run", 10)),
             reports_enabled=flag(data.get("reports", {}), "enabled", True),
             reports_drive=flag(data.get("reports", {}), "upload_to_drive", True),
-            cookies_from_drive=flag(download, "cookies_from_drive", False))
+            cookies_from_drive=flag(download, "cookies_from_drive", False),
+            youtube_token_from_drive=flag(youtube, "token_from_drive", False),
+            control_sheet_id=str(data.get("control", {}).get("spreadsheet_id", "")))
+        if result.control_sheet_id and not re.fullmatch(r"[A-Za-z0-9_-]{10,200}", result.control_sheet_id):
+            raise ValueError("control.spreadsheet_id")
         if min(result.min_free_bytes, result.max_height, result.sleep_seconds) < 0 or min(
             result.recent_limit, result.full_rescan_hours, result.max_jobs, result.retry_minutes,
             result.chunk_bytes, result.max_youtube_uploads) <= 0 or result.chunk_bytes > 64 * 1024**2:
             raise ValueError("numeric settings")
-        if result.youtube_enabled and not re.fullmatch(r"UC[A-Za-z0-9_-]{22}", result.youtube_channel):
+        if (result.youtube_enabled or result.youtube_token_from_drive) and not re.fullmatch(r"UC[A-Za-z0-9_-]{22}", result.youtube_channel):
             raise ValueError("youtube.channel_id")
         return result
     except ArchiveError:

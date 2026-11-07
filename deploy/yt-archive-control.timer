@@ -1,0 +1,11 @@
+[Unit]
+Description=Check private archive sheet about every 30 minutes
+
+[Timer]
+OnActiveSec=30min
+OnUnitInactiveSec=30min
+AccuracySec=1s
+Unit=yt-archive-control.service
+
+[Install]
+WantedBy=timers.target

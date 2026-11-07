@@ -47,9 +47,10 @@ find data secrets -type d -exec chmod 700 {} +
 find data secrets -type f -exec chmod 600 {} +
 chmod 640 config.toml
 
-install -m 644 deploy/yt-archive.service deploy/yt-archive.timer deploy/yt-archive-report.service deploy/yt-archive-report.timer /etc/systemd/system/
+install -m 644 deploy/yt-archive.service deploy/yt-archive.timer deploy/yt-archive-report.service deploy/yt-archive-report.timer deploy/yt-archive-control.service deploy/yt-archive-control.timer /etc/systemd/system/
 systemctl daemon-reload
 systemctl disable --now yt-archive.timer
+systemctl disable --now yt-archive-control.timer
 systemd-analyze verify /etc/systemd/system/yt-archive.service /etc/systemd/system/yt-archive.timer /etc/systemd/system/yt-archive-report.service /etc/systemd/system/yt-archive-report.timer
 .venv/bin/python -m unittest discover -s tests -q
 systemctl enable --now yt-archive-report.timer

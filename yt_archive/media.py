@@ -41,6 +41,8 @@ class Downloader:
         failures = []
         discovered_at = epoch()
         for channel in self.config.channels:
+            if not channel.download:
+                continue
             for tab in channel.tabs:
                 source = channel.url + "/" + tab
                 full = database.full_scan_due(source, self.config.full_rescan_hours)

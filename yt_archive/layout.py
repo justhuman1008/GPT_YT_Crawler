@@ -11,6 +11,7 @@ ARCHIVE_DIRECTORY = "유튜브 동영상"
 MANAGEMENT_DIRECTORY = "관리용 파일"
 REPORTS_DIRECTORY = MANAGEMENT_DIRECTORY + "/로그"
 COOKIES_RELATIVE_PATH = MANAGEMENT_DIRECTORY + "/youtube-cookies.txt"
+YOUTUBE_TOKEN_RELATIVE_PATH = MANAGEMENT_DIRECTORY + "/youtube-token.json"
 
 
 def component(value, fallback):

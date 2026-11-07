@@ -31,6 +31,9 @@ enabled = false
 upload_existing = false
 client_secrets_file = "secrets/youtube-client.json"
 token_file = "secrets/youtube-token.json"
+# 실행 시작 때 관리용 파일/youtube-token.json이 바뀐 경우에만 내려받아 검증합니다.
+# 이 기능은 Google Drive rclone 연결이 필요하며 영상 업로드를 켜지 않습니다.
+token_from_drive = false
 # OAuth 승인 시 선택한 채널 ID와 반드시 일치해야 합니다.
 channel_id = ""
 category_id = "22"
@@ -47,6 +50,11 @@ retry_minutes = 30
 # 각 수집 실행 후 어제·오늘 보고서 갱신. 채팅 전송·예약은 별도 설정합니다.
 enabled = true
 upload_to_drive = true
+
+[control]
+# 비공개 Google 스프레드시트의 ID. 입력하면 시트의 채널 목록을 사용합니다.
+# 자동 실행은 별도 control.timer가 시트의 체크박스·시각·간격을 확인합니다.
+spreadsheet_id = ""
 
 # 채널을 필요한 만큼 추가합니다. 채널별 youtube = false로 업로드를 제외할 수 있습니다.
 # [[channels]]

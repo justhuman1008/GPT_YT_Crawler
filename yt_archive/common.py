@@ -21,6 +21,10 @@ class Deferred(ArchiveError):
     """A video is not ready, e.g. live or still processing."""
 
 
+class LockBusy(ArchiveError):
+    """Another collection owns the lock; a scheduler must skip this tick."""
+
+
 class Skipped(ArchiveError):
     """A video does not match the configured collection policy."""
 
@@ -124,7 +128,7 @@ def run_lock(directory: Path):
                 import fcntl
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            raise ArchiveError("다른 작업이 실행 중입니다.") from None
+            raise LockBusy("다른 작업이 실행 중입니다.") from None
         try:
             yield
         finally:

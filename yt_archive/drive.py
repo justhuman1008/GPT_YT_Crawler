@@ -47,25 +47,31 @@ class Drive:
         return json.loads(raw) if raw is not None else None
 
     def cookie_snapshot(self):
+        return self._management_snapshot("youtube-cookies.txt", 1024 * 1024)
+
+    def youtube_token_snapshot(self):
+        return self._management_snapshot("youtube-token.json", 64 * 1024)
+
+    def _management_snapshot(self, name, max_bytes):
         """Read metadata only, rejecting ambiguous same-name Drive files."""
         raw = self.run(["lsjson", self.config.drive_remote + "/" + MANAGEMENT_DIRECTORY,
                         "--files-only", "--hash"], missing=True, timeout=180)
         if raw is None:
-            raise ArchiveError("Drive 관리용 파일 폴더의 youtube-cookies.txt를 찾을 수 없습니다.")
+            raise ArchiveError(f"Drive 관리용 파일 폴더의 {name}을 찾을 수 없습니다.")
         try:
             entries = json.loads(raw)
             if not isinstance(entries, list):
                 raise ValueError()
             matches = [item for item in entries if isinstance(item, dict)
-                       and item.get("Name", item.get("Path")) == "youtube-cookies.txt"]
+                       and item.get("Name", item.get("Path")) == name]
             if len(matches) != 1:
-                raise ArchiveError("Drive 관리용 파일 폴더에는 youtube-cookies.txt가 정확히 하나 있어야 합니다.")
+                raise ArchiveError(f"Drive 관리용 파일 폴더에는 {name}이 정확히 하나 있어야 합니다.")
             item = matches[0]
             hashes = item.get("Hashes") or {}
             md5 = next((value for key, value in hashes.items() if key.lower() == "md5"), None)
             modified = datetime.fromisoformat(item["ModTime"].replace("Z", "+00:00"))
             if (item.get("IsDir") is not False or type(item.get("Size")) is not int
-                    or not 0 < item["Size"] <= 1024 * 1024 or modified.tzinfo is None
+                    or not 0 < item["Size"] <= max_bytes or modified.tzinfo is None
                     or not isinstance(item.get("ID"), str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,200}", item["ID"])
                     or not isinstance(md5, str) or not re.fullmatch(r"[a-fA-F0-9]{32}", md5)
                     or str(item.get("MimeType", "")).startswith("application/vnd.google-apps.")):
@@ -73,11 +79,32 @@ class Drive:
             return {"id": item["ID"], "size": item["Size"], "modified": modified.astimezone(timezone.utc).isoformat(),
                     "md5": md5.lower()}
         except (ValueError, TypeError, KeyError, AttributeError, OverflowError):
-            raise ArchiveError("Drive 쿠키 파일의 크기·형식·수정 정보·MD5를 확인할 수 없습니다. 1MiB 이하의 일반 텍스트 파일을 사용하세요.") from None
+            raise ArchiveError(f"Drive {name}의 크기·형식·수정 정보·MD5를 확인할 수 없습니다. {max_bytes}바이트 이하의 일반 파일을 사용하세요.") from None
 
     def download_cookies(self, destination):
-        self.run(["copyto", self.config.drive_remote + "/" + COOKIES_RELATIVE_PATH, str(destination),
-                  "--ignore-times", "--max-size", "1048576B"], timeout=180)
+        self._download_management_file(COOKIES_RELATIVE_PATH, destination, 1024 * 1024)
+
+    def download_youtube_token(self, destination):
+        from .layout import YOUTUBE_TOKEN_RELATIVE_PATH
+
+        self._download_management_file(YOUTUBE_TOKEN_RELATIVE_PATH, destination, 64 * 1024)
+
+    def _download_management_file(self, relative, destination, max_bytes):
+        # copyto rejects a single-file source together with --max-size filters.
+        # Bound the content read instead, keeping credential bytes out of stdout/logs.
+        destination = Path(destination)
+        try:
+            if destination.is_symlink():
+                raise OSError()
+            with destination.open("wb") as handle:
+                destination.chmod(0o600)
+                result = subprocess.run(self.command + ["cat", self.config.drive_remote + "/" + relative,
+                                                       "--head", str(max_bytes + 1)],
+                                        stdout=handle, stderr=subprocess.DEVNULL, timeout=180)
+            if result.returncode or destination.stat().st_size > max_bytes:
+                raise OSError()
+        except (OSError, subprocess.TimeoutExpired):
+            raise ArchiveError("Drive 인증 파일 수신에 실패했습니다. 연결과 파일 크기를 확인하세요. 기존 인증 파일은 보존합니다.") from None
 
     def ensure_capacity(self, estimated=0):
         info = json.loads(self.run(["about", self.config.drive_remote.split(":", 1)[0] + ":", "--json"]))

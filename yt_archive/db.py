@@ -105,6 +105,8 @@ class Database:
         jobs = []
         for row in rows:
             job = dict(row)
+            if not config.job_enabled(job):
+                continue
             if job["state"] != "complete" or not job["completed_at"] or config.wants_youtube(job) and not job["youtube_verified_at"]:
                 jobs.append(job)
             if len(jobs) >= config.max_jobs:

@@ -385,7 +385,12 @@ class DriveCookieMetadataTests(Fixture):
 
     def test_cookie_transfer_is_drive_to_local_only_with_size_limit(self):
         destination = self.root / "private-staging.txt"
-        with patch.object(self.drive, "run") as run:
+        def receive(command, *, stdout, stderr, timeout):
+            self.assertEqual(command[-4:], ["cat", self.config.drive_remote + "/관리용 파일/youtube-cookies.txt",
+                                            "--head", "1048577"])
+            stdout.write(cookie_bytes())
+            return Mock(returncode=0)
+        with patch("yt_archive.drive.subprocess.run", side_effect=receive) as run:
             self.drive.download_cookies(destination)
-        run.assert_called_once_with(["copyto", self.config.drive_remote + "/관리용 파일/youtube-cookies.txt",
-                                     str(destination), "--ignore-times", "--max-size", "1048576B"], timeout=180)
+        self.assertEqual(destination.read_bytes(), cookie_bytes())
+        self.assertEqual(run.call_count, 1)
